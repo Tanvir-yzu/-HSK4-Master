@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSK4 Learning - Master Chinese Vocabulary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        .scale-in { animation: scaleIn 0.3s ease-out; }
+
+        /* Flashcard */
+        .flashcard-container { perspective: 1200px; }
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 340px;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        @media (min-width: 640px) { .flashcard { height: 400px; } }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-radius: 1.25rem;
+        }
+        @media (min-width: 640px) { .flashcard-face { padding: 2rem; } }
+        .flashcard-front {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+        }
+        .flashcard-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+            box-shadow: 0 20px 40px rgba(245, 87, 108, 0.3);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Cards */
+        .word-card { transition: all 0.3s ease; }
+        .word-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+        }
+
+        /* Stat card gradient borders */
+        .stat-card { position: relative; overflow: hidden; }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            border-radius: 0.75rem 0.75rem 0 0;
+        }
+        .stat-card-purple::before { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .stat-card-green::before { background: linear-gradient(90deg, #48bb78, #38a169); }
+        .stat-card-blue::before { background: linear-gradient(90deg, #4299e1, #667eea); }
+
+        /* Mobile nav overlay */
+        .nav-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .nav-drawer {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+        /* Loading shimmer */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen" x-data="hsk4App()" x-init="init()">
+    <!-- Navigation -->
+    <nav class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                        <span class="text-white text-lg font-bold">H</span>
+                    </div>
+                    <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        HSK4 Master
+                    </h1>
+                </div>
+
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center space-x-2">
+                    <template x-for="view in ['dashboard', 'words', 'flashcards', 'quiz']" :key="view">
+                        <button @click="currentView = view"
+                                :class="currentView === view
+                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                                class="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
+                                x-text="view.charAt(0).toUpperCase() + view.slice(1)">
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Mobile Hamburger -->
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Drawer -->
+        <div x-show="mobileMenuOpen" x-cloak class="md:hidden nav-overlay fixed inset-0 bg-black/30 z-40" @click.self="mobileMenuOpen = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="nav-drawer absolute top-16 right-0 w-64 bg-white shadow-2xl rounded-bl-2xl p-4 space-y-2"
+                 x-show="mobileMenuOpen"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-x-4"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 translate-x-4">
+                <template x-for="view in ['dashboard', 'words', 'flashcards', 'quiz']" :key="view">
+                    <button @click="currentView = view; mobileMenuOpen = false"
+                            :class="currentView === view
+                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'"
+                            class="w-full text-left px-4 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-3"
+                            x-text="view.charAt(0).toUpperCase() + view.slice(1)">
+                    </button>
+                </template>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <!-- Loading State -->
+        <div x-show="words.length === 0" class="flex flex-col items-center justify-center py-20">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6 animate-pulse">
+                <span class="text-white text-2xl font-bold">H</span>
+            </div>
+            <p class="text-gray-500 font-medium">Loading HSK4 vocabulary...</p>
+        </div>
+
+        <!-- Dashboard View -->
+        <div x-show="currentView === 'dashboard' && words.length > 0" x-cloak class="fade-in">
+            <div class="mb-8">
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Your Learning Progress</h2>
+                <p class="text-gray-500 mt-1">Track your HSK4 vocabulary mastery</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+                <div class="stat-card stat-card-purple bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 word-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Words</h3>
+                        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                            <span class="text-xl">📖</span>
+                        </div>
+                    </div>
+                    <p class="text-3xl sm:text-4xl font-bold text-gray-800" x-text="words.length"></p>
+                    <p class="text-sm text-gray-400 mt-1">HSK4 vocabulary</p>
+                </div>
+
+                <div class="stat-card stat-card-green bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 word-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Learned</h3>
+                        <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                            <span class="text-xl">✅</span>
+                        </div>
+                    </div>
+                    <p class="text-3xl sm:text-4xl font-bold text-gray-800" x-text="getLearnedCount()"></p>
+                    <p class="text-sm text-gray-400 mt-1">Words mastered</p>
+                </div>
+
+                <div class="stat-card stat-card-blue bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 word-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Progress</h3>
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                            <span class="text-xl">📊</span>
+                        </div>
+                    </div>
+                    <p class="text-3xl sm:text-4xl font-bold text-gray-800" x-text="getProgressPercentage() + '%'"></p>
+                    <div class="w-full bg-gray-100 rounded-full h-2.5 mt-3 overflow-hidden">
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-700 ease-out"
+                             :style="`width: ${getProgressPercentage()}%`"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-8">
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-5">Quick Start</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <button @click="currentView = 'flashcards'"
+                            class="btn-primary text-white px-5 py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center space-x-3 shadow-lg">
+                        <span class="text-2xl">🎴</span>
+                        <span>Start Flashcards</span>
+                    </button>
+                    <button @click="currentView = 'quiz'"
+                            class="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-5 py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+                        <span class="text-2xl">📝</span>
+                        <span>Take a Quiz</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-5">Recent Activity</h3>
+                <div class="space-y-3">
+                    <template x-if="getRecentActivity().length === 0">
+                        <div class="text-center py-10">
+                            <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                                <span class="text-3xl">📋</span>
+                            </div>
+                            <p class="text-gray-400 font-medium">No recent activity</p>
+                            <p class="text-gray-300 text-sm mt-1">Start learning to see your progress here</p>
+                        </div>
+                    </template>
+                    <template x-for="activity in getRecentActivity()" :key="activity.timestamp">
+                        <div class="flex items-center space-x-4 p-3 sm:p-4 bg-gray-50 rounded-xl slide-in hover:bg-gray-100 transition-colors">
+                            <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                                <span class="text-xl" x-text="activity.icon"></span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-gray-800 text-sm sm:text-base truncate" x-text="activity.text"></p>
+                                <p class="text-xs sm:text-sm text-gray-400" x-text="formatTime(activity.timestamp)"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Words List View -->
+        <div x-show="currentView === 'words' && words.length > 0" x-cloak class="fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">HSK4 Word List</h2>
+                <p class="text-gray-500 mb-4">Browse and search all vocabulary</p>
+                <div class="relative">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           x-model="searchQuery"
+                           placeholder="Search by word, pinyin, or meaning..."
+                           class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-400 transition-all text-sm sm:text-base">
+                </div>
+            </div>
+
+            <!-- Results count -->
+            <p class="text-sm text-gray-400 mb-4" x-show="searchQuery">
+                <span x-text="filteredWords().length"></span> result<span x-show="filteredWords().length !== 1">s</span> found
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <template x-for="word in filteredWords()" :key="word.entry_number">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 word-card cursor-pointer"
+                         @click="selectWord(word)">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-2xl sm:text-3xl font-bold text-gray-800" x-text="word.word"></h3>
+                            <button @click.stop="toggleLearned(word.entry_number)"
+                                    :class="isLearned(word.entry_number) ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300 hover:text-gray-400'"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 text-lg font-bold flex-shrink-0">
+                                ✓
+                            </button>
+                        </div>
+                        <p class="text-purple-600 font-semibold text-sm mb-1.5" x-text="word.pinyin"></p>
+                        <p class="text-gray-500 text-sm line-clamp-2" x-text="word.meaning"></p>
+                    </div>
+                </template>
+            </div>
+
+            <!-- No results -->
+            <div x-show="filteredWords().length === 0 && searchQuery" class="text-center py-16">
+                <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl">🔍</span>
+                </div>
+                <p class="text-gray-400 font-medium">No words found</p>
+                <p class="text-gray-300 text-sm mt-1">Try a different search term</p>
+            </div>
+        </div>
+
+        <!-- Word Detail Modal -->
+        <div x-show="selectedWord" x-cloak
+             class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
+             @click.self="selectedWord = null"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scale-in"
+                 @click.stop>
+                <template x-if="selectedWord">
+                    <div class="p-5 sm:p-8">
+                        <!-- Header -->
+                        <div class="flex justify-between items-start mb-5">
+                            <div class="min-w-0 flex-1">
+                                <h2 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-1" x-text="selectedWord.word"></h2>
+                                <p class="text-lg sm:text-xl text-purple-600 font-semibold" x-text="selectedWord.pinyin"></p>
+                            </div>
+                            <button @click="selectedWord = null" class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors flex-shrink-0 ml-3">
+                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Meaning -->
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 sm:p-5 mb-5 border border-purple-100/50">
+                            <p class="text-base sm:text-lg text-gray-700" x-text="selectedWord.meaning"></p>
+                        </div>
+
+                        <!-- Examples -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center space-x-2">
+                                <span>Example Sentences</span>
+                                <span class="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-semibold" x-text="selectedWord.examples.length"></span>
+                            </h3>
+                            <div class="space-y-3">
+                                <template x-for="(example, idx) in selectedWord.examples" :key="idx">
+                                    <div class="bg-gray-50 rounded-xl p-4 slide-in border border-gray-100">
+                                        <p class="text-lg sm:text-xl text-gray-800 font-semibold mb-1" x-text="example.example_chinese"></p>
+                                        <p class="text-purple-600 text-sm mb-1" x-text="example.example_pinyin"></p>
+                                        <p class="text-gray-500 text-sm" x-text="example.example_translation"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Mark as learned -->
+                        <button @click="toggleLearned(selectedWord.entry_number)"
+                                :class="isLearned(selectedWord.entry_number) ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : 'btn-primary shadow-purple-200'"
+                                class="w-full text-white px-6 py-3.5 rounded-xl font-semibold transition-all shadow-lg">
+                            <span x-text="isLearned(selectedWord.entry_number) ? '✓ Learned' : 'Mark as Learned'"></span>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Flashcards View -->
+        <div x-show="currentView === 'flashcards' && words.length > 0" x-cloak class="fade-in">
+            <div class="max-w-xl mx-auto">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Flashcards</h2>
+                    <p class="text-gray-500 text-sm sm:text-base">
+                        Card <span class="font-semibold text-purple-600" x-text="flashcardIndex + 1"></span> of <span x-text="flashcardDeck.length"></span>
+                    </p>
+                    <!-- Progress bar -->
+                    <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3 mx-auto max-w-xs overflow-hidden">
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
+                             :style="`width: ${((flashcardIndex + 1) / flashcardDeck.length) * 100}%`"></div>
+                    </div>
+                </div>
+
+                <template x-if="flashcardDeck.length > 0">
+                    <div>
+                        <!-- Card -->
+                        <div class="flashcard-container mb-6">
+                            <div class="flashcard" :class="{ 'flipped': flashcardFlipped }" @click="flashcardFlipped = !flashcardFlipped">
+                                <div class="flashcard-face flashcard-front">
+                                    <p class="text-5xl sm:text-6xl font-bold mb-3" x-text="flashcardDeck[flashcardIndex].word"></p>
+                                    <p class="text-base sm:text-lg opacity-80 flex items-center space-x-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        <span>Tap to flip</span>
+                                    </p>
+                                </div>
+                                <div class="flashcard-face flashcard-back">
+                                    <p class="text-2xl sm:text-3xl font-bold mb-3" x-text="flashcardDeck[flashcardIndex].pinyin"></p>
+                                    <p class="text-base sm:text-lg text-center leading-relaxed" x-text="flashcardDeck[flashcardIndex].meaning"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="flex flex-col sm:flex-row justify-center gap-3 mb-6">
+                            <button @click="previousFlashcard()"
+                                    :disabled="flashcardIndex === 0"
+                                    class="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-all text-sm sm:text-base">
+                                ← Previous
+                            </button>
+                            <button @click="toggleLearned(flashcardDeck[flashcardIndex].entry_number); nextFlashcard()"
+                                    class="btn-primary text-white px-5 py-3 rounded-xl font-semibold shadow-lg text-sm sm:text-base">
+                                Mark Learned & Next →
+                            </button>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-center gap-3">
+                            <button @click="shuffleFlashcards()"
+                                    class="bg-purple-50 text-purple-700 px-4 py-2.5 rounded-xl font-medium hover:bg-purple-100 transition-all text-sm border border-purple-100">
+                                🔀 Shuffle
+                            </button>
+                            <button @click="resetFlashcards()"
+                                    class="bg-pink-50 text-pink-700 px-4 py-2.5 rounded-xl font-medium hover:bg-pink-100 transition-all text-sm border border-pink-100">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Quiz View -->
+        <div x-show="currentView === 'quiz' && words.length > 0" x-cloak class="fade-in">
+            <div class="max-w-xl mx-auto">
+                <!-- Quiz Start -->
+                <template x-if="!quizActive">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center">
+                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-6">
+                            <span class="text-4xl">📝</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">Quiz Mode</h2>
+                        <p class="text-gray-500 mb-8 max-w-sm mx-auto">Test your knowledge with 10 multiple choice questions</p>
+                        <button @click="startQuiz()"
+                                class="btn-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg">
+                            Start Quiz
+                        </button>
+                    </div>
+                </template>
+
+                <!-- Quiz In Progress -->
+                <template x-if="quizActive && quizQuestions.length > 0">
+                    <div>
+                        <!-- Progress -->
+                        <div class="flex justify-between items-center mb-4">
+                            <p class="text-sm text-gray-500">
+                                Question <span class="font-semibold text-gray-700" x-text="currentQuizQuestion + 1"></span>/<span x-text="quizQuestions.length"></span>
+                            </p>
+                            <div class="flex items-center space-x-2 bg-purple-50 px-3 py-1.5 rounded-lg">
+                                <span class="text-sm font-semibold text-purple-600">Score:</span>
+                                <span class="text-lg font-bold text-purple-700" x-text="quizScore"></span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-6 overflow-hidden">
+                            <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
+                                 :style="`width: ${((currentQuizQuestion + 1) / quizQuestions.length) * 100}%`"></div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 mb-4">
+                            <!-- Word display -->
+                            <div class="text-center mb-8">
+                                <p class="text-4xl sm:text-5xl font-bold text-gray-800 mb-2" x-text="quizQuestions[currentQuizQuestion].word.word"></p>
+                                <p class="text-lg text-purple-600 font-semibold" x-text="quizQuestions[currentQuizQuestion].word.pinyin"></p>
+                            </div>
+
+                            <!-- Options -->
+                            <div class="space-y-2.5">
+                                <template x-for="(option, idx) in quizQuestions[currentQuizQuestion].options" :key="idx">
+                                    <button @click="answerQuiz(idx)"
+                                            :class="getQuizOptionClass(idx)"
+                                            class="w-full text-left px-4 sm:px-5 py-3.5 rounded-xl font-medium transition-all duration-200 text-sm sm:text-base border"
+                                            :disabled="quizAnswered"
+                                            x-text="option">
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- Feedback -->
+                            <div x-show="quizAnswered" class="mt-6 fade-in">
+                                <template x-if="quizQuestions[currentQuizQuestion].correctIndex === quizSelectedAnswer">
+                                    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                                        <p class="text-green-700 font-bold text-lg">✓ Correct!</p>
+                                    </div>
+                                </template>
+                                <template x-if="quizQuestions[currentQuizQuestion].correctIndex !== quizSelectedAnswer">
+                                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                                        <p class="text-red-700 font-bold text-lg mb-1">✗ Incorrect</p>
+                                        <p class="text-red-600 text-sm">Correct: <span class="font-semibold" x-text="quizQuestions[currentQuizQuestion].options[quizQuestions[currentQuizQuestion].correctIndex]"></span></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <button x-show="quizAnswered"
+                                @click="nextQuizQuestion()"
+                                class="btn-primary text-white w-full px-6 py-4 rounded-xl font-bold text-lg shadow-lg">
+                            <span x-text="currentQuizQuestion < quizQuestions.length - 1 ? 'Next Question →' : 'Finish Quiz'"></span>
+                        </button>
+                    </div>
+                </template>
+
+                <!-- Quiz Complete -->
+                <template x-if="quizActive && quizQuestions.length === 0">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center scale-in">
+                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center mx-auto mb-6">
+                            <span class="text-4xl">🏆</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Quiz Complete!</h2>
+                        <div class="my-6">
+                            <p class="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent" x-text="quizScore + '/10'"></p>
+                        </div>
+                        <p class="text-lg text-gray-500 mb-8" x-text="getQuizResultMessage()"></p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button @click="startQuiz()"
+                                    class="flex-1 btn-primary text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg">
+                                Play Again
+                            </button>
+                            <button @click="quizActive = false"
+                                    class="flex-1 bg-gray-100 text-gray-700 px-6 py-3.5 rounded-xl font-semibold hover:bg-gray-200 transition-all">
+                                Back to Menu
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-12 py-6 border-t border-gray-100">
+        <p class="text-center text-sm text-gray-400">HSK4 Master — Learn Chinese vocabulary effectively</p>
+    </footer>
+
+    <script>
+        function hsk4App() {
+            return {
+                words: [],
+                currentView: 'dashboard',
+                mobileMenuOpen: false,
+                searchQuery: '',
+                selectedWord: null,
+                learnedWords: JSON.parse(localStorage.getItem('hsk4_learned') || '[]'),
+                recentActivity: JSON.parse(localStorage.getItem('hsk4_activity') || '[]'),
+
+                // Flashcard state
+                flashcardDeck: [],
+                flashcardIndex: 0,
+                flashcardFlipped: false,
+
+                // Quiz state
+                quizActive: false,
+                quizQuestions: [],
+                currentQuizQuestion: 0,
+                quizScore: 0,
+                quizSelectedAnswer: null,
+                quizAnswered: false,
+
+                async init() {
+                    try {
+                        const response = await fetch('full_data_cleaned_words.json');
+                        this.words = await response.json();
+                        this.shuffleFlashcards();
+                    } catch (error) {
+                        console.error('Error loading words:', error);
+                    }
+                },
+
+                filteredWords() {
+                    if (!this.searchQuery) return this.words;
+                    const query = this.searchQuery.toLowerCase();
+                    return this.words.filter(w =>
+                        w.word.includes(query) ||
+                        w.pinyin.toLowerCase().includes(query) ||
+                        w.meaning.toLowerCase().includes(query)
+                    );
+                },
+
+                selectWord(word) {
+                    this.selectedWord = word;
+                },
+
+                isLearned(entryNumber) {
+                    return this.learnedWords.includes(entryNumber);
+                },
+
+                toggleLearned(entryNumber) {
+                    const index = this.learnedWords.indexOf(entryNumber);
+                    if (index > -1) {
+                        this.learnedWords.splice(index, 1);
+                    } else {
+                        this.learnedWords.push(entryNumber);
+                        this.addActivity('✅', 'Learned new word');
+                    }
+                    localStorage.setItem('hsk4_learned', JSON.stringify(this.learnedWords));
+                },
+
+                getLearnedCount() {
+                    return this.learnedWords.length;
+                },
+
+                getProgressPercentage() {
+                    if (this.words.length === 0) return 0;
+                    return Math.round((this.learnedWords.length / this.words.length) * 100);
+                },
+
+                addActivity(icon, text) {
+                    this.recentActivity.unshift({
+                        icon,
+                        text,
+                        timestamp: Date.now()
+                    });
+                    if (this.recentActivity.length > 10) {
+                        this.recentActivity = this.recentActivity.slice(0, 10);
+                    }
+                    localStorage.setItem('hsk4_activity', JSON.stringify(this.recentActivity));
+                },
+
+                getRecentActivity() {
+                    return this.recentActivity;
+                },
+
+                formatTime(timestamp) {
+                    const diff = Date.now() - timestamp;
+                    const minutes = Math.floor(diff / 60000);
+                    if (minutes < 1) return 'Just now';
+                    if (minutes < 60) return `${minutes}m ago`;
+                    const hours = Math.floor(minutes / 60);
+                    if (hours < 24) return `${hours}h ago`;
+                    const days = Math.floor(hours / 24);
+                    return `${days}d ago`;
+                },
+
+                // Flashcard methods
+                shuffleFlashcards() {
+                    this.flashcardDeck = [...this.words].sort(() => Math.random() - 0.5);
+                    this.flashcardIndex = 0;
+                    this.flashcardFlipped = false;
+                    this.addActivity('🎴', 'Started flashcard session');
+                },
+
+                resetFlashcards() {
+                    this.flashcardIndex = 0;
+                    this.flashcardFlipped = false;
+                },
+
+                previousFlashcard() {
+                    if (this.flashcardIndex > 0) {
+                        this.flashcardIndex--;
+                        this.flashcardFlipped = false;
+                    }
+                },
+
+                nextFlashcard() {
+                    if (this.flashcardIndex < this.flashcardDeck.length - 1) {
+                        this.flashcardIndex++;
+                        this.flashcardFlipped = false;
+                    } else {
+                        this.shuffleFlashcards();
+                    }
+                },
+
+                // Quiz methods
+                startQuiz() {
+                    const shuffled = [...this.words].sort(() => Math.random() - 0.5);
+                    const selected = shuffled.slice(0, 10);
+
+                    this.quizQuestions = selected.map(word => {
+                        const wrongAnswers = this.words
+                            .filter(w => w.entry_number !== word.entry_number)
+                            .sort(() => Math.random() - 0.5)
+                            .slice(0, 3)
+                            .map(w => w.meaning);
+
+                        const options = [...wrongAnswers, word.meaning].sort(() => Math.random() - 0.5);
+                        const correctIndex = options.indexOf(word.meaning);
+
+                        return { word, options, correctIndex };
+                    });
+
+                    this.currentQuizQuestion = 0;
+                    this.quizScore = 0;
+                    this.quizSelectedAnswer = null;
+                    this.quizAnswered = false;
+                    this.addActivity('📝', 'Started quiz');
+                },
+
+                answerQuiz(selectedIndex) {
+                    this.quizSelectedAnswer = selectedIndex;
+                    this.quizAnswered = true;
+                    if (selectedIndex === this.quizQuestions[this.currentQuizQuestion].correctIndex) {
+                        this.quizScore++;
+                    }
+                },
+
+                getQuizOptionClass(index) {
+                    if (!this.quizAnswered) {
+                        return 'bg-gray-50 hover:bg-purple-50 text-gray-700 border-gray-200 hover:border-purple-300';
+                    }
+                    if (index === this.quizQuestions[this.currentQuizQuestion].correctIndex) {
+                        return 'bg-green-500 text-white border-green-500';
+                    }
+                    if (index === this.quizSelectedAnswer && index !== this.quizQuestions[this.currentQuizQuestion].correctIndex) {
+                        return 'bg-red-500 text-white border-red-500';
+                    }
+                    return 'bg-gray-50 text-gray-400 border-gray-200';
+                },
+
+                nextQuizQuestion() {
+                    if (this.currentQuizQuestion < this.quizQuestions.length - 1) {
+                        this.currentQuizQuestion++;
+                        this.quizSelectedAnswer = null;
+                        this.quizAnswered = false;
+                    } else {
+                        this.addActivity('🏆', `Completed quiz: ${this.quizScore}/10`);
+                        this.quizQuestions = [];
+                    }
+                },
+
+                getQuizResultMessage() {
+                    const score = this.quizScore;
+                    if (score === 10) return 'Perfect score! You\'re a master!';
+                    if (score >= 8) return 'Excellent work! Almost there!';
+                    if (score >= 6) return 'Good job! Keep practicing!';
+                    if (score >= 4) return 'Not bad! Review and try again.';
+                    return 'Keep studying, you\'ll improve!';
+                }
+            };
+        }
+    </script>
+</body>
+</html>
