@@ -3,41 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HSK4 Learning - Master Chinese Vocabulary</title>
+    <title>HSK4 Master · 词汇精通</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
 
+        :root {
+            --paper: #F1EFE3;
+            --paper-raised: #FBFAF4;
+            --ink: #211F1C;
+            --ink-soft: #6B675C;
+            --ink-faint: #9B9689;
+            --jade: #2E6F5C;
+            --jade-soft: #E1EBE5;
+            --jade-deep: #1F5245;
+            --seal: #B23A2E;
+            --seal-soft: #F5E3DF;
+            --seal-deep: #8F2C22;
+            --gold: #B8863A;
+            --rule: #DCD5C1;
+            --rule-strong: #C9C0A5;
+        }
+
+        * { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Noto Serif SC', serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        html, body { background: var(--paper); }
+
+        /* subtle paper grain — restrained, not decorative overload */
+        body {
+            background-image:
+                radial-gradient(circle at 20% 10%, rgba(178,58,46,0.03), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(46,111,92,0.04), transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(0,0,0,0.02), transparent 50%);
+            color: var(--ink);
+        }
+
         /* Animations */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(12px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-16px); }
+            from { opacity: 0; transform: translateX(-14px); }
             to { opacity: 1; transform: translateX(0); }
         }
         @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.95); }
+            from { opacity: 0; transform: scale(0.96); }
             to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes stampIn {
+            0% { transform: scale(1.6) rotate(-14deg); opacity: 0; }
+            60% { transform: scale(0.92) rotate(-4deg); opacity: 1; }
+            100% { transform: scale(1) rotate(-6deg); opacity: 1; }
         }
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
-        }
-        @keyframes pulse-soft {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
         }
 
         .fade-in { animation: fadeIn 0.4s ease-out; }
         .slide-in { animation: slideIn 0.3s ease-out; }
         .scale-in { animation: scaleIn 0.3s ease-out; }
 
+        /* Seal / chop mark — the signature element */
+        .seal-mark {
+            width: 2.75rem; height: 2.75rem;
+            border-radius: 0.5rem;
+            background: var(--seal);
+            color: var(--paper-raised);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 12px rgba(178,58,46,0.35), inset 0 0 0 1px rgba(255,255,255,0.15);
+            transform: rotate(-3deg);
+            flex-shrink: 0;
+        }
+
+        .stamp {
+            width: 2.25rem; height: 2.25rem;
+            border-radius: 9999px;
+            border: 1.5px solid var(--rule-strong);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: transparent;
+            background: transparent;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex-shrink: 0;
+        }
+        .stamp:hover { border-color: var(--seal); }
+        .stamp-active {
+            background: var(--seal);
+            border-color: var(--seal);
+            color: #fff;
+            transform: rotate(-8deg) scale(1.05);
+            box-shadow: 0 6px 14px rgba(178,58,46,0.35);
+            animation: stampIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Brush-stroke divider */
+        .brush-divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, var(--rule-strong) 8%, var(--rule-strong) 92%, transparent 100%);
+            opacity: 0.8;
+        }
+
+        /* Buttons */
+        .btn-ink {
+            background: var(--ink);
+            color: var(--paper-raised);
+            transition: all 0.25s ease;
+        }
+        .btn-ink:hover { background: #3A3730; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(33,31,28,0.25); }
+        .btn-ink:active { transform: translateY(0); }
+
+        .btn-seal {
+            background: var(--seal);
+            color: #fff;
+            transition: all 0.25s ease;
+        }
+        .btn-seal:hover { background: var(--seal-deep); transform: translateY(-2px); box-shadow: 0 10px 22px rgba(178,58,46,0.3); }
+        .btn-seal:active { transform: translateY(0); }
+
+        .btn-jade {
+            background: var(--jade);
+            color: #fff;
+            transition: all 0.25s ease;
+        }
+        .btn-jade:hover { background: var(--jade-deep); transform: translateY(-2px); box-shadow: 0 10px 22px rgba(46,111,92,0.3); }
+
+        /* Cards */
+        .paper-card {
+            background: var(--paper-raised);
+            border: 1px solid var(--rule);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        .paper-card:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(33,31,28,0.08); border-color: var(--rule-strong); }
+
+        .stat-card { position: relative; }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 1.25rem; right: 1.25rem;
+            height: 2px;
+        }
+        .stat-card-seal::before { background: var(--seal); }
+        .stat-card-jade::before { background: var(--jade); }
+        .stat-card-gold::before { background: var(--gold); }
+
+        /* Nav */
+        .nav-btn {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 0.4rem 0.9rem;
+            border-radius: 0.6rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .nav-btn .nav-cn { font-family: 'Noto Serif SC', serif; font-size: 0.9rem; font-weight: 600; line-height: 1.1; }
+        .nav-btn .nav-en { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.65; margin-top: 1px; }
+        .nav-btn-active { color: var(--seal); }
+        .nav-btn-active::after {
+            content: '';
+            position: absolute; bottom: -0.6rem; left: 50%; transform: translateX(-50%);
+            width: 5px; height: 5px; border-radius: 9999px; background: var(--seal);
+        }
+        .nav-btn-inactive { color: var(--ink-soft); }
+        .nav-btn-inactive:hover { color: var(--ink); background: var(--jade-soft); }
+
         /* Flashcard */
-        .flashcard-container { perspective: 1200px; }
+        .flashcard-container { perspective: 1400px; }
         .flashcard {
             position: relative;
             width: 100%;
@@ -59,112 +202,89 @@
             align-items: center;
             padding: 1.5rem;
             border-radius: 1.25rem;
+            border: 1px solid var(--rule);
         }
         @media (min-width: 640px) { .flashcard-face { padding: 2rem; } }
         .flashcard-front {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+            background: var(--paper-raised);
+            color: var(--ink);
+            box-shadow: 0 20px 40px rgba(33,31,28,0.1);
         }
         .flashcard-back {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
+            background: var(--jade);
+            color: #fff;
             transform: rotateY(180deg);
-            box-shadow: 0 20px 40px rgba(245, 87, 108, 0.3);
+            box-shadow: 0 20px 40px rgba(46,111,92,0.28);
+            border-color: var(--jade-deep);
         }
-
-        /* Buttons */
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        /* Cards */
-        .word-card { transition: all 0.3s ease; }
-        .word-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-        }
-
-        /* Stat card gradient borders */
-        .stat-card { position: relative; overflow: hidden; }
-        .stat-card::before {
-            content: '';
+        .flashcard-corner-seal {
             position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            border-radius: 0.75rem 0.75rem 0 0;
+            top: 1rem; right: 1rem;
+            width: 2.5rem; height: 2.5rem;
+            border-radius: 0.4rem;
+            background: var(--seal);
+            opacity: 0.9;
+            display: flex; align-items: center; justify-content: center;
+            transform: rotate(6deg);
+            font-family: 'Noto Serif SC', serif;
+            color: #fff; font-weight: 700; font-size: 0.85rem;
         }
-        .stat-card-purple::before { background: linear-gradient(90deg, #667eea, #764ba2); }
-        .stat-card-green::before { background: linear-gradient(90deg, #48bb78, #38a169); }
-        .stat-card-blue::before { background: linear-gradient(90deg, #4299e1, #667eea); }
 
         /* Mobile nav overlay */
-        .nav-overlay {
-            transition: opacity 0.3s ease;
-        }
-        .nav-drawer {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .nav-overlay { transition: opacity 0.3s ease; }
+        .nav-drawer { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+        ::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
 
-        /* Loading shimmer */
         .loading-shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background: linear-gradient(90deg, #ECE9DB 25%, #E2DECB 50%, #ECE9DB 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
         }
+
+        .progress-track { background: #E7E2D0; }
+        .progress-fill { background: var(--seal); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen" x-data="hsk4App()" x-init="init()">
+<body class="min-h-screen" x-data="hsk4App()" x-init="init()">
     <!-- Navigation -->
-    <nav class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50 border-b border-gray-100">
+    <nav class="bg-[var(--paper)]/90 backdrop-blur-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
-                <div class="flex items-center space-x-2 flex-shrink-0">
-                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                        <span class="text-white text-lg font-bold">H</span>
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                    <div class="seal-mark">印</div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-display font-bold text-[var(--ink)] leading-tight">HSK4 Master</h1>
+                        <p class="text-xs text-[var(--ink-soft)] font-mono tracking-wide">汉语水平考试 · 四级词汇</p>
                     </div>
-                    <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        HSK4 Master
-                    </h1>
                 </div>
 
                 <!-- Desktop Nav -->
-                <div class="hidden md:flex items-center space-x-2">
+                <div class="hidden md:flex items-center space-x-1">
                     <template x-for="view in ['dashboard', 'words', 'flashcards', 'quiz']" :key="view">
                         <button @click="currentView = view"
-                                :class="currentView === view
-                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                                class="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
-                                x-text="view.charAt(0).toUpperCase() + view.slice(1)">
+                                :class="currentView === view ? 'nav-btn nav-btn-active' : 'nav-btn nav-btn-inactive'">
+                            <span class="nav-cn" x-text="navLabels[view]"></span>
+                            <span class="nav-en" x-text="view"></span>
                         </button>
                     </template>
                 </div>
 
                 <!-- Mobile Hamburger -->
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 rounded-xl hover:bg-[var(--jade-soft)] transition-colors">
+                    <svg class="w-6 h-6 text-[var(--ink)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
         </div>
+        <div class="brush-divider"></div>
 
         <!-- Mobile Menu Drawer -->
         <div x-show="mobileMenuOpen" x-cloak class="md:hidden nav-overlay fixed inset-0 bg-black/30 z-40" @click.self="mobileMenuOpen = false"
@@ -174,7 +294,7 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0">
-            <div class="nav-drawer absolute top-16 right-0 w-64 bg-white shadow-2xl rounded-bl-2xl p-4 space-y-2"
+            <div class="nav-drawer absolute top-20 right-0 w-64 bg-[var(--paper-raised)] shadow-2xl rounded-bl-2xl p-4 space-y-2 border-l border-b border-[var(--rule)]"
                  x-show="mobileMenuOpen"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-x-4"
@@ -185,10 +305,11 @@
                 <template x-for="view in ['dashboard', 'words', 'flashcards', 'quiz']" :key="view">
                     <button @click="currentView = view; mobileMenuOpen = false"
                             :class="currentView === view
-                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'"
-                            class="w-full text-left px-4 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-3"
-                            x-text="view.charAt(0).toUpperCase() + view.slice(1)">
+                                ? 'bg-[var(--seal)] text-white'
+                                : 'bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--jade-soft)]'"
+                            class="w-full text-left px-4 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-3">
+                        <span class="font-display" x-text="navLabels[view]"></span>
+                        <span class="text-xs uppercase tracking-wide opacity-70" x-text="view"></span>
                     </button>
                 </template>
             </div>
@@ -199,96 +320,89 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <!-- Loading State -->
         <div x-show="words.length === 0" class="flex flex-col items-center justify-center py-20">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6 animate-pulse">
-                <span class="text-white text-2xl font-bold">H</span>
-            </div>
-            <p class="text-gray-500 font-medium">Loading HSK4 vocabulary...</p>
+            <div class="seal-mark w-16 h-16 text-3xl mb-6" style="animation: fadeIn 1.2s ease-in-out infinite alternate;">印</div>
+            <p class="text-[var(--ink-soft)] font-medium">Loading HSK4 vocabulary…</p>
         </div>
 
         <!-- Dashboard View -->
         <div x-show="currentView === 'dashboard' && words.length > 0" x-cloak class="fade-in">
             <div class="mb-8">
-                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Your Learning Progress</h2>
-                <p class="text-gray-500 mt-1">Track your HSK4 vocabulary mastery</p>
+                <p class="font-mono text-xs tracking-widest text-[var(--seal)] uppercase mb-1">进度总览 · Progress</p>
+                <h2 class="text-2xl sm:text-3xl font-display font-bold text-[var(--ink)]">Your Learning Progress</h2>
+                <p class="text-[var(--ink-soft)] mt-1">Track your HSK4 vocabulary mastery</p>
             </div>
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-                <div class="stat-card stat-card-purple bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 word-card">
+                <div class="stat-card stat-card-seal paper-card p-5 sm:p-6">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Words</h3>
-                        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                            <span class="text-xl">📖</span>
-                        </div>
+                        <h3 class="text-sm font-semibold text-[var(--ink-soft)] uppercase tracking-wide">Total Words</h3>
+                        <div class="w-10 h-10 rounded-lg bg-[var(--seal-soft)] flex items-center justify-center font-display text-[var(--seal)] font-bold">词</div>
                     </div>
-                    <p class="text-3xl sm:text-4xl font-bold text-gray-800" x-text="words.length"></p>
-                    <p class="text-sm text-gray-400 mt-1">HSK4 vocabulary</p>
+                    <p class="text-3xl sm:text-4xl font-mono font-bold text-[var(--ink)]" x-text="words.length"></p>
+                    <p class="text-sm text-[var(--ink-faint)] mt-1">HSK4 vocabulary</p>
                 </div>
 
-                <div class="stat-card stat-card-green bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 word-card">
+                <div class="stat-card stat-card-jade paper-card p-5 sm:p-6">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Learned</h3>
-                        <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                            <span class="text-xl">✅</span>
-                        </div>
+                        <h3 class="text-sm font-semibold text-[var(--ink-soft)] uppercase tracking-wide">Learned</h3>
+                        <div class="w-10 h-10 rounded-lg bg-[var(--jade-soft)] flex items-center justify-center font-display text-[var(--jade)] font-bold">学</div>
                     </div>
-                    <p class="text-3xl sm:text-4xl font-bold text-gray-800" x-text="getLearnedCount()"></p>
-                    <p class="text-sm text-gray-400 mt-1">Words mastered</p>
+                    <p class="text-3xl sm:text-4xl font-mono font-bold text-[var(--ink)]" x-text="getLearnedCount()"></p>
+                    <p class="text-sm text-[var(--ink-faint)] mt-1">Words mastered</p>
                 </div>
 
-                <div class="stat-card stat-card-blue bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 word-card">
+                <div class="stat-card stat-card-gold paper-card p-5 sm:p-6">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Progress</h3>
-                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <span class="text-xl">📊</span>
-                        </div>
+                        <h3 class="text-sm font-semibold text-[var(--ink-soft)] uppercase tracking-wide">Progress</h3>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center font-display font-bold" style="background: #F3EAD3; color: var(--gold);">率</div>
                     </div>
-                    <p class="text-3xl sm:text-4xl font-bold text-gray-800" x-text="getProgressPercentage() + '%'"></p>
-                    <div class="w-full bg-gray-100 rounded-full h-2.5 mt-3 overflow-hidden">
-                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-700 ease-out"
+                    <p class="text-3xl sm:text-4xl font-mono font-bold text-[var(--ink)]" x-text="getProgressPercentage() + '%'"></p>
+                    <div class="w-full progress-track rounded-full h-2 mt-3 overflow-hidden">
+                        <div class="progress-fill h-full rounded-full transition-all duration-700 ease-out"
                              :style="`width: ${getProgressPercentage()}%`"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-8">
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-5">Quick Start</h3>
+            <div class="paper-card p-6 sm:p-8 mb-8">
+                <h3 class="text-xl sm:text-2xl font-display font-bold text-[var(--ink)] mb-5">Quick Start</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <button @click="currentView = 'flashcards'"
-                            class="btn-primary text-white px-5 py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center space-x-3 shadow-lg">
-                        <span class="text-2xl">🎴</span>
+                            class="btn-ink px-5 py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center space-x-3">
+                        <span class="font-display text-xl">卡</span>
                         <span>Start Flashcards</span>
                     </button>
                     <button @click="currentView = 'quiz'"
-                            class="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-5 py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
-                        <span class="text-2xl">📝</span>
+                            class="btn-seal px-5 py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center space-x-3">
+                        <span class="font-display text-xl">测</span>
                         <span>Take a Quiz</span>
                     </button>
                 </div>
             </div>
 
             <!-- Recent Activity -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-5">Recent Activity</h3>
+            <div class="paper-card p-6 sm:p-8">
+                <h3 class="text-xl sm:text-2xl font-display font-bold text-[var(--ink)] mb-5">Recent Activity</h3>
                 <div class="space-y-3">
                     <template x-if="getRecentActivity().length === 0">
                         <div class="text-center py-10">
-                            <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                                <span class="text-3xl">📋</span>
+                            <div class="w-16 h-16 rounded-2xl bg-[var(--paper)] flex items-center justify-center mx-auto mb-4 border border-[var(--rule)]">
+                                <span class="font-display text-2xl text-[var(--ink-faint)]">空</span>
                             </div>
-                            <p class="text-gray-400 font-medium">No recent activity</p>
-                            <p class="text-gray-300 text-sm mt-1">Start learning to see your progress here</p>
+                            <p class="text-[var(--ink-faint)] font-medium">No recent activity</p>
+                            <p class="text-[var(--ink-faint)] text-sm mt-1 opacity-70">Start learning to see your progress here</p>
                         </div>
                     </template>
                     <template x-for="activity in getRecentActivity()" :key="activity.timestamp">
-                        <div class="flex items-center space-x-4 p-3 sm:p-4 bg-gray-50 rounded-xl slide-in hover:bg-gray-100 transition-colors">
-                            <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                        <div class="flex items-center space-x-4 p-3 sm:p-4 bg-[var(--paper)] rounded-xl slide-in hover:bg-[var(--jade-soft)] transition-colors">
+                            <div class="w-10 h-10 rounded-lg bg-[var(--paper-raised)] border border-[var(--rule)] flex items-center justify-center flex-shrink-0">
                                 <span class="text-xl" x-text="activity.icon"></span>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="font-semibold text-gray-800 text-sm sm:text-base truncate" x-text="activity.text"></p>
-                                <p class="text-xs sm:text-sm text-gray-400" x-text="formatTime(activity.timestamp)"></p>
+                                <p class="font-semibold text-[var(--ink)] text-sm sm:text-base truncate" x-text="activity.text"></p>
+                                <p class="text-xs sm:text-sm text-[var(--ink-faint)] font-mono" x-text="formatTime(activity.timestamp)"></p>
                             </div>
                         </div>
                     </template>
@@ -299,55 +413,55 @@
         <!-- Words List View -->
         <div x-show="currentView === 'words' && words.length > 0" x-cloak class="fade-in">
             <div class="mb-6">
-                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">HSK4 Word List</h2>
-                <p class="text-gray-500 mb-4">Browse and search all vocabulary</p>
+                <p class="font-mono text-xs tracking-widest text-[var(--seal)] uppercase mb-1">词库 · Word Bank</p>
+                <h2 class="text-2xl sm:text-3xl font-display font-bold text-[var(--ink)] mb-1">HSK4 Word List</h2>
+                <p class="text-[var(--ink-soft)] mb-4">Browse and search all vocabulary</p>
                 <div class="relative">
-                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text"
                            x-model="searchQuery"
                            placeholder="Search by word, pinyin, or meaning..."
-                           class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-400 transition-all text-sm sm:text-base">
+                           class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[var(--rule)] bg-[var(--paper-raised)] focus:outline-none focus:ring-2 focus:ring-[var(--seal)]/30 focus:border-[var(--seal)] transition-all text-sm sm:text-base text-[var(--ink)]">
                 </div>
             </div>
 
             <!-- Results count -->
-            <p class="text-sm text-gray-400 mb-4" x-show="searchQuery">
+            <p class="text-sm text-[var(--ink-faint)] mb-4 font-mono" x-show="searchQuery">
                 <span x-text="filteredWords().length"></span> result<span x-show="filteredWords().length !== 1">s</span> found
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <template x-for="word in filteredWords()" :key="word.entry_number">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 word-card cursor-pointer"
+                    <div class="paper-card p-5 cursor-pointer"
                          @click="selectWord(word)">
                         <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-2xl sm:text-3xl font-bold text-gray-800" x-text="word.word"></h3>
+                            <h3 class="text-2xl sm:text-3xl font-display font-bold text-[var(--ink)]" x-text="word.word"></h3>
                             <button @click.stop="toggleLearned(word.entry_number)"
-                                    :class="isLearned(word.entry_number) ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300 hover:text-gray-400'"
-                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 text-lg font-bold flex-shrink-0">
-                                ✓
+                                    :class="isLearned(word.entry_number) ? 'stamp stamp-active' : 'stamp'">
+                                <span x-text="isLearned(word.entry_number) ? '学' : ''"></span>
                             </button>
                         </div>
-                        <p class="text-purple-600 font-semibold text-sm mb-1.5" x-text="word.pinyin"></p>
-                        <p class="text-gray-500 text-sm line-clamp-2" x-text="word.meaning"></p>
+                        <p class="text-[var(--seal)] font-mono font-semibold text-sm mb-1.5" x-text="word.pinyin"></p>
+                        <p class="text-[var(--ink-soft)] text-sm line-clamp-2" x-text="word.meaning"></p>
                     </div>
                 </template>
             </div>
 
             <!-- No results -->
             <div x-show="filteredWords().length === 0 && searchQuery" class="text-center py-16">
-                <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                    <span class="text-3xl">🔍</span>
+                <div class="w-16 h-16 rounded-2xl bg-[var(--paper-raised)] border border-[var(--rule)] flex items-center justify-center mx-auto mb-4">
+                    <span class="font-display text-2xl text-[var(--ink-faint)]">无</span>
                 </div>
-                <p class="text-gray-400 font-medium">No words found</p>
-                <p class="text-gray-300 text-sm mt-1">Try a different search term</p>
+                <p class="text-[var(--ink-faint)] font-medium">No words found</p>
+                <p class="text-[var(--ink-faint)] text-sm mt-1 opacity-70">Try a different search term</p>
             </div>
         </div>
 
         <!-- Word Detail Modal -->
         <div x-show="selectedWord" x-cloak
-             class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
+             class="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50"
              @click.self="selectedWord = null"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
@@ -355,40 +469,40 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0">
-            <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scale-in"
+            <div class="bg-[var(--paper-raised)] rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scale-in border border-[var(--rule)]"
                  @click.stop>
                 <template x-if="selectedWord">
                     <div class="p-5 sm:p-8">
                         <!-- Header -->
                         <div class="flex justify-between items-start mb-5">
                             <div class="min-w-0 flex-1">
-                                <h2 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-1" x-text="selectedWord.word"></h2>
-                                <p class="text-lg sm:text-xl text-purple-600 font-semibold" x-text="selectedWord.pinyin"></p>
+                                <h2 class="text-4xl sm:text-5xl font-display font-bold text-[var(--ink)] mb-1" x-text="selectedWord.word"></h2>
+                                <p class="text-lg sm:text-xl text-[var(--seal)] font-mono font-semibold" x-text="selectedWord.pinyin"></p>
                             </div>
-                            <button @click="selectedWord = null" class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors flex-shrink-0 ml-3">
-                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <button @click="selectedWord = null" class="w-10 h-10 rounded-xl bg-[var(--paper)] hover:bg-[var(--jade-soft)] flex items-center justify-center transition-colors flex-shrink-0 ml-3">
+                                <svg class="w-5 h-5 text-[var(--ink-soft)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </button>
                         </div>
 
                         <!-- Meaning -->
-                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 sm:p-5 mb-5 border border-purple-100/50">
-                            <p class="text-base sm:text-lg text-gray-700" x-text="selectedWord.meaning"></p>
+                        <div class="bg-[var(--jade-soft)] rounded-xl p-4 sm:p-5 mb-5 border border-[var(--jade)]/15">
+                            <p class="text-base sm:text-lg text-[var(--ink)]" x-text="selectedWord.meaning"></p>
                         </div>
 
                         <!-- Examples -->
                         <div class="mb-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center space-x-2">
+                            <h3 class="text-lg font-display font-bold text-[var(--ink)] mb-3 flex items-center space-x-2">
                                 <span>Example Sentences</span>
-                                <span class="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-semibold" x-text="selectedWord.examples.length"></span>
+                                <span class="text-xs bg-[var(--seal-soft)] text-[var(--seal)] px-2 py-0.5 rounded-full font-mono font-semibold" x-text="selectedWord.examples.length"></span>
                             </h3>
                             <div class="space-y-3">
                                 <template x-for="(example, idx) in selectedWord.examples" :key="idx">
-                                    <div class="bg-gray-50 rounded-xl p-4 slide-in border border-gray-100">
-                                        <p class="text-lg sm:text-xl text-gray-800 font-semibold mb-1" x-text="example.example_chinese"></p>
-                                        <p class="text-purple-600 text-sm mb-1" x-text="example.example_pinyin"></p>
-                                        <p class="text-gray-500 text-sm" x-text="example.example_translation"></p>
+                                    <div class="bg-[var(--paper)] rounded-xl p-4 slide-in border border-[var(--rule)]">
+                                        <p class="text-lg sm:text-xl text-[var(--ink)] font-display font-semibold mb-1" x-text="example.example_chinese"></p>
+                                        <p class="text-[var(--seal)] font-mono text-sm mb-1" x-text="example.example_pinyin"></p>
+                                        <p class="text-[var(--ink-soft)] text-sm" x-text="example.example_translation"></p>
                                     </div>
                                 </template>
                             </div>
@@ -396,9 +510,9 @@
 
                         <!-- Mark as learned -->
                         <button @click="toggleLearned(selectedWord.entry_number)"
-                                :class="isLearned(selectedWord.entry_number) ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : 'btn-primary shadow-purple-200'"
-                                class="w-full text-white px-6 py-3.5 rounded-xl font-semibold transition-all shadow-lg">
-                            <span x-text="isLearned(selectedWord.entry_number) ? '✓ Learned' : 'Mark as Learned'"></span>
+                                :class="isLearned(selectedWord.entry_number) ? 'btn-jade' : 'btn-seal'"
+                                class="w-full px-6 py-3.5 rounded-xl font-semibold transition-all">
+                            <span x-text="isLearned(selectedWord.entry_number) ? '学 · Learned' : 'Mark as Learned'"></span>
                         </button>
                     </div>
                 </template>
@@ -409,13 +523,14 @@
         <div x-show="currentView === 'flashcards' && words.length > 0" x-cloak class="fade-in">
             <div class="max-w-xl mx-auto">
                 <div class="text-center mb-6">
-                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Flashcards</h2>
-                    <p class="text-gray-500 text-sm sm:text-base">
-                        Card <span class="font-semibold text-purple-600" x-text="flashcardIndex + 1"></span> of <span x-text="flashcardDeck.length"></span>
+                    <p class="font-mono text-xs tracking-widest text-[var(--seal)] uppercase mb-1">卡片 · Flashcards</p>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold text-[var(--ink)] mb-1">Flashcards</h2>
+                    <p class="text-[var(--ink-soft)] text-sm sm:text-base">
+                        Card <span class="font-mono font-semibold text-[var(--seal)]" x-text="flashcardIndex + 1"></span> of <span class="font-mono" x-text="flashcardDeck.length"></span>
                     </p>
                     <!-- Progress bar -->
-                    <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3 mx-auto max-w-xs overflow-hidden">
-                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
+                    <div class="w-full progress-track rounded-full h-1.5 mt-3 mx-auto max-w-xs overflow-hidden">
+                        <div class="progress-fill h-full rounded-full transition-all duration-500"
                              :style="`width: ${((flashcardIndex + 1) / flashcardDeck.length) * 100}%`"></div>
                     </div>
                 </div>
@@ -426,14 +541,15 @@
                         <div class="flashcard-container mb-6">
                             <div class="flashcard" :class="{ 'flipped': flashcardFlipped }" @click="flashcardFlipped = !flashcardFlipped">
                                 <div class="flashcard-face flashcard-front">
-                                    <p class="text-5xl sm:text-6xl font-bold mb-3" x-text="flashcardDeck[flashcardIndex].word"></p>
-                                    <p class="text-base sm:text-lg opacity-80 flex items-center space-x-1">
+                                    <div class="flashcard-corner-seal">词</div>
+                                    <p class="text-5xl sm:text-6xl font-display font-bold mb-3" x-text="flashcardDeck[flashcardIndex].word"></p>
+                                    <p class="text-sm sm:text-base text-[var(--ink-soft)] flex items-center space-x-1.5 font-mono uppercase tracking-wide">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                         <span>Tap to flip</span>
                                     </p>
                                 </div>
                                 <div class="flashcard-face flashcard-back">
-                                    <p class="text-2xl sm:text-3xl font-bold mb-3" x-text="flashcardDeck[flashcardIndex].pinyin"></p>
+                                    <p class="text-2xl sm:text-3xl font-mono font-bold mb-3" x-text="flashcardDeck[flashcardIndex].pinyin"></p>
                                     <p class="text-base sm:text-lg text-center leading-relaxed" x-text="flashcardDeck[flashcardIndex].meaning"></p>
                                 </div>
                             </div>
@@ -443,11 +559,11 @@
                         <div class="flex flex-col sm:flex-row justify-center gap-3 mb-6">
                             <button @click="previousFlashcard()"
                                     :disabled="flashcardIndex === 0"
-                                    class="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-all text-sm sm:text-base">
+                                    class="bg-[var(--paper-raised)] border border-[var(--rule)] text-[var(--ink)] px-5 py-3 rounded-xl font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--jade-soft)] transition-all text-sm sm:text-base">
                                 ← Previous
                             </button>
                             <button @click="toggleLearned(flashcardDeck[flashcardIndex].entry_number); nextFlashcard()"
-                                    class="btn-primary text-white px-5 py-3 rounded-xl font-semibold shadow-lg text-sm sm:text-base">
+                                    class="btn-seal px-5 py-3 rounded-xl font-semibold text-sm sm:text-base">
                                 Mark Learned & Next →
                             </button>
                         </div>
@@ -455,11 +571,11 @@
                         <!-- Actions -->
                         <div class="flex justify-center gap-3">
                             <button @click="shuffleFlashcards()"
-                                    class="bg-purple-50 text-purple-700 px-4 py-2.5 rounded-xl font-medium hover:bg-purple-100 transition-all text-sm border border-purple-100">
+                                    class="bg-[var(--jade-soft)] text-[var(--jade-deep)] px-4 py-2.5 rounded-xl font-medium hover:brightness-95 transition-all text-sm border border-[var(--jade)]/15">
                                 🔀 Shuffle
                             </button>
                             <button @click="resetFlashcards()"
-                                    class="bg-pink-50 text-pink-700 px-4 py-2.5 rounded-xl font-medium hover:bg-pink-100 transition-all text-sm border border-pink-100">
+                                    class="bg-[var(--seal-soft)] text-[var(--seal-deep)] px-4 py-2.5 rounded-xl font-medium hover:brightness-95 transition-all text-sm border border-[var(--seal)]/15">
                                 🔄 Reset
                             </button>
                         </div>
@@ -473,14 +589,13 @@
             <div class="max-w-xl mx-auto">
                 <!-- Quiz Start -->
                 <template x-if="!quizActive">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center">
-                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-6">
-                            <span class="text-4xl">📝</span>
-                        </div>
-                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">Quiz Mode</h2>
-                        <p class="text-gray-500 mb-8 max-w-sm mx-auto">Test your knowledge with 10 multiple choice questions</p>
+                    <div class="paper-card p-6 sm:p-8 text-center">
+                        <div class="seal-mark w-20 h-20 text-4xl mx-auto mb-6">测</div>
+                        <p class="font-mono text-xs tracking-widest text-[var(--seal)] uppercase mb-2">测验 · Quiz Mode</p>
+                        <h2 class="text-2xl sm:text-3xl font-display font-bold text-[var(--ink)] mb-3">Quiz Mode</h2>
+                        <p class="text-[var(--ink-soft)] mb-8 max-w-sm mx-auto">Test your knowledge with 10 multiple choice questions</p>
                         <button @click="startQuiz()"
-                                class="btn-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg">
+                                class="btn-seal px-8 py-4 rounded-xl font-bold text-lg">
                             Start Quiz
                         </button>
                     </div>
@@ -491,24 +606,24 @@
                     <div>
                         <!-- Progress -->
                         <div class="flex justify-between items-center mb-4">
-                            <p class="text-sm text-gray-500">
-                                Question <span class="font-semibold text-gray-700" x-text="currentQuizQuestion + 1"></span>/<span x-text="quizQuestions.length"></span>
+                            <p class="text-sm text-[var(--ink-soft)] font-mono">
+                                Question <span class="font-semibold text-[var(--ink)]" x-text="currentQuizQuestion + 1"></span>/<span x-text="quizQuestions.length"></span>
                             </p>
-                            <div class="flex items-center space-x-2 bg-purple-50 px-3 py-1.5 rounded-lg">
-                                <span class="text-sm font-semibold text-purple-600">Score:</span>
-                                <span class="text-lg font-bold text-purple-700" x-text="quizScore"></span>
+                            <div class="flex items-center space-x-2 bg-[var(--seal-soft)] px-3 py-1.5 rounded-lg">
+                                <span class="text-sm font-semibold text-[var(--seal-deep)]">Score:</span>
+                                <span class="text-lg font-mono font-bold text-[var(--seal)]" x-text="quizScore"></span>
                             </div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-6 overflow-hidden">
-                            <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
+                        <div class="w-full progress-track rounded-full h-1.5 mb-6 overflow-hidden">
+                            <div class="progress-fill h-full rounded-full transition-all duration-500"
                                  :style="`width: ${((currentQuizQuestion + 1) / quizQuestions.length) * 100}%`"></div>
                         </div>
 
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 mb-4">
+                        <div class="paper-card p-5 sm:p-8 mb-4">
                             <!-- Word display -->
                             <div class="text-center mb-8">
-                                <p class="text-4xl sm:text-5xl font-bold text-gray-800 mb-2" x-text="quizQuestions[currentQuizQuestion].word.word"></p>
-                                <p class="text-lg text-purple-600 font-semibold" x-text="quizQuestions[currentQuizQuestion].word.pinyin"></p>
+                                <p class="text-4xl sm:text-5xl font-display font-bold text-[var(--ink)] mb-2" x-text="quizQuestions[currentQuizQuestion].word.word"></p>
+                                <p class="text-lg text-[var(--seal)] font-mono font-semibold" x-text="quizQuestions[currentQuizQuestion].word.pinyin"></p>
                             </div>
 
                             <!-- Options -->
@@ -526,14 +641,14 @@
                             <!-- Feedback -->
                             <div x-show="quizAnswered" class="mt-6 fade-in">
                                 <template x-if="quizQuestions[currentQuizQuestion].correctIndex === quizSelectedAnswer">
-                                    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                                        <p class="text-green-700 font-bold text-lg">✓ Correct!</p>
+                                    <div class="bg-[var(--jade-soft)] border border-[var(--jade)]/25 rounded-xl p-4 text-center">
+                                        <p class="text-[var(--jade-deep)] font-display font-bold text-lg">✓ 对了 · Correct!</p>
                                     </div>
                                 </template>
                                 <template x-if="quizQuestions[currentQuizQuestion].correctIndex !== quizSelectedAnswer">
-                                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-                                        <p class="text-red-700 font-bold text-lg mb-1">✗ Incorrect</p>
-                                        <p class="text-red-600 text-sm">Correct: <span class="font-semibold" x-text="quizQuestions[currentQuizQuestion].options[quizQuestions[currentQuizQuestion].correctIndex]"></span></p>
+                                    <div class="bg-[var(--seal-soft)] border border-[var(--seal)]/25 rounded-xl p-4 text-center">
+                                        <p class="text-[var(--seal-deep)] font-display font-bold text-lg mb-1">✗ 错了 · Incorrect</p>
+                                        <p class="text-[var(--seal-deep)] text-sm">Correct: <span class="font-semibold" x-text="quizQuestions[currentQuizQuestion].options[quizQuestions[currentQuizQuestion].correctIndex]"></span></p>
                                     </div>
                                 </template>
                             </div>
@@ -541,7 +656,7 @@
 
                         <button x-show="quizAnswered"
                                 @click="nextQuizQuestion()"
-                                class="btn-primary text-white w-full px-6 py-4 rounded-xl font-bold text-lg shadow-lg">
+                                class="btn-ink w-full px-6 py-4 rounded-xl font-bold text-lg">
                             <span x-text="currentQuizQuestion < quizQuestions.length - 1 ? 'Next Question →' : 'Finish Quiz'"></span>
                         </button>
                     </div>
@@ -549,22 +664,20 @@
 
                 <!-- Quiz Complete -->
                 <template x-if="quizActive && quizQuestions.length === 0">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center scale-in">
-                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center mx-auto mb-6">
-                            <span class="text-4xl">🏆</span>
-                        </div>
-                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Quiz Complete!</h2>
+                    <div class="paper-card p-6 sm:p-8 text-center scale-in">
+                        <div class="seal-mark w-20 h-20 text-4xl mx-auto mb-6" style="background: var(--gold);">榜</div>
+                        <h2 class="text-2xl sm:text-3xl font-display font-bold text-[var(--ink)] mb-2">Quiz Complete!</h2>
                         <div class="my-6">
-                            <p class="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent" x-text="quizScore + '/10'"></p>
+                            <p class="text-5xl sm:text-6xl font-mono font-bold text-[var(--seal)]" x-text="quizScore + '/10'"></p>
                         </div>
-                        <p class="text-lg text-gray-500 mb-8" x-text="getQuizResultMessage()"></p>
+                        <p class="text-lg text-[var(--ink-soft)] mb-8" x-text="getQuizResultMessage()"></p>
                         <div class="flex flex-col sm:flex-row gap-3">
                             <button @click="startQuiz()"
-                                    class="flex-1 btn-primary text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg">
+                                    class="flex-1 btn-seal px-6 py-3.5 rounded-xl font-semibold">
                                 Play Again
                             </button>
                             <button @click="quizActive = false"
-                                    class="flex-1 bg-gray-100 text-gray-700 px-6 py-3.5 rounded-xl font-semibold hover:bg-gray-200 transition-all">
+                                    class="flex-1 bg-[var(--paper)] text-[var(--ink)] border border-[var(--rule)] px-6 py-3.5 rounded-xl font-semibold hover:bg-[var(--jade-soft)] transition-all">
                                 Back to Menu
                             </button>
                         </div>
@@ -575,8 +688,9 @@
     </main>
 
     <!-- Footer -->
-    <footer class="mt-12 py-6 border-t border-gray-100">
-        <p class="text-center text-sm text-gray-400">HSK4 Master — Learn Chinese vocabulary effectively</p>
+    <footer class="mt-12 py-6 brush-divider-wrap">
+        <div class="brush-divider max-w-7xl mx-auto"></div>
+        <p class="text-center text-sm text-[var(--ink-faint)] font-mono mt-6">HSK4 Master — 学而时习之 — Learn Chinese vocabulary effectively</p>
     </footer>
 
     <script>
@@ -589,6 +703,7 @@
                 selectedWord: null,
                 learnedWords: JSON.parse(localStorage.getItem('hsk4_learned') || '[]'),
                 recentActivity: JSON.parse(localStorage.getItem('hsk4_activity') || '[]'),
+                navLabels: { dashboard: '首页', words: '词库', flashcards: '卡片', quiz: '测验' },
 
                 // Flashcard state
                 flashcardDeck: [],
@@ -742,15 +857,15 @@
 
                 getQuizOptionClass(index) {
                     if (!this.quizAnswered) {
-                        return 'bg-gray-50 hover:bg-purple-50 text-gray-700 border-gray-200 hover:border-purple-300';
+                        return 'bg-[var(--paper)] hover:bg-[var(--jade-soft)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--jade)]';
                     }
                     if (index === this.quizQuestions[this.currentQuizQuestion].correctIndex) {
-                        return 'bg-green-500 text-white border-green-500';
+                        return 'bg-[var(--jade)] text-white border-[var(--jade)]';
                     }
                     if (index === this.quizSelectedAnswer && index !== this.quizQuestions[this.currentQuizQuestion].correctIndex) {
-                        return 'bg-red-500 text-white border-red-500';
+                        return 'bg-[var(--seal)] text-white border-[var(--seal)]';
                     }
-                    return 'bg-gray-50 text-gray-400 border-gray-200';
+                    return 'bg-[var(--paper)] text-[var(--ink-faint)] border-[var(--rule)]';
                 },
 
                 nextQuizQuestion() {
